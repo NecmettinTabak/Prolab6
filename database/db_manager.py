@@ -28,133 +28,130 @@ class DBManager:
     def __tablolari_kontrol_et_ve_olustur(self):
         tablolar = {
             "users": """
-                   CREATE TABLE IF NOT EXISTS users (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       tc_no VARCHAR(11) UNIQUE NOT NULL,
-                       ad VARCHAR(50),
-                       soyad VARCHAR(50),
-                       email VARCHAR(100),
-                       sifre VARCHAR(100),
-                       cinsiyet VARCHAR(10),
-                       dogum_tarihi DATE,
-                       rol VARCHAR(20),
-                       profil_resmi TEXT,
-                       doktor_id INT,
-                       FOREIGN KEY (doktor_id) REFERENCES users(id) ON DELETE SET NULL
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    tc_no VARCHAR(11) UNIQUE NOT NULL,
+                    ad VARCHAR(50),
+                    soyad VARCHAR(50),
+                    email VARCHAR(100),
+                    sifre VARCHAR(100),
+                    cinsiyet VARCHAR(10),
+                    dogum_tarihi DATE,
+                    rol VARCHAR(20),
+                    profil_resmi TEXT,
+                    doktor_id INT,
+                    FOREIGN KEY (doktor_id) REFERENCES users(id) ON DELETE SET NULL
+                );
+            """,
             "measurements": """
-                   CREATE TABLE IF NOT EXISTS measurements (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       tarih DATE NOT NULL,
-                       saat TIME NOT NULL,
-                       seviye INT NOT NULL,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS measurements (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    tarih DATE NOT NULL,
+                    saat TIME NOT NULL,
+                    zaman_dilimi ENUM('sabah', 'ogle', 'ikindi', 'aksam', 'gece') NOT NULL,
+                    seviye INT NOT NULL,
+                    UNIQUE(hasta_id, tarih, zaman_dilimi),
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+            """,
+
             "recommendation_rules": """
-                   CREATE TABLE IF NOT EXISTS recommendation_rules (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       min_seker INT NOT NULL,
-                       max_seker INT NOT NULL,
-                       belirtiler TEXT NOT NULL,
-                       diyet_id INT,
-                       egzersiz_id INT,
-                       FOREIGN KEY (diyet_id) REFERENCES diet_types(id) ON DELETE SET NULL,
-                       FOREIGN KEY (egzersiz_id) REFERENCES exercise_types(id) ON DELETE SET NULL
-                   );
-               """,
-            "assigned_recommendations": """
-                   CREATE TABLE IF NOT EXISTS assigned_recommendations (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       rule_id INT NOT NULL,
-                       tarih DATE NOT NULL,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
-                       FOREIGN KEY (rule_id) REFERENCES recommendation_rules(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS recommendation_rules (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    min_seker INT NOT NULL,
+                    max_seker INT NOT NULL,
+                    belirtiler TEXT NOT NULL,
+                    diyet_id INT,
+                    egzersiz_id INT,
+                    FOREIGN KEY (diyet_id) REFERENCES diet_types(id) ON DELETE SET NULL,
+                    FOREIGN KEY (egzersiz_id) REFERENCES exercise_types(id) ON DELETE SET NULL
+                );
+            """,
             "symptoms": """
-                   CREATE TABLE IF NOT EXISTS symptoms (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       ad VARCHAR(100) UNIQUE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS symptoms (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ad VARCHAR(100) UNIQUE
+                );
+            """,
             "patient_symptoms": """
-                   CREATE TABLE IF NOT EXISTS patient_symptoms (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       symptom_id INT NOT NULL,
-                       tarih DATE NOT NULL,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
-                       FOREIGN KEY (symptom_id) REFERENCES symptoms(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS patient_symptoms (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    symptom_id INT NOT NULL,
+                    tarih DATE NOT NULL,
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (symptom_id) REFERENCES symptoms(id) ON DELETE CASCADE
+                );
+            """,
             "exercise_types": """
-                   CREATE TABLE IF NOT EXISTS exercise_types (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       ad VARCHAR(100) UNIQUE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS exercise_types (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ad VARCHAR(100) UNIQUE
+                );
+            """,
             "patient_exercises": """
-                   CREATE TABLE IF NOT EXISTS patient_exercises (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       egzersiz_id INT NOT NULL,
-                       tarih DATE NOT NULL,
-                       yapildi_mi BOOLEAN DEFAULT FALSE,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
-                       FOREIGN KEY (egzersiz_id) REFERENCES exercise_types(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS patient_exercises (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    egzersiz_id INT NOT NULL,
+                    tarih DATE NOT NULL,
+                    yapildi_mi BOOLEAN DEFAULT FALSE,
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (egzersiz_id) REFERENCES exercise_types(id) ON DELETE CASCADE
+                );
+            """,
             "diet_types": """
-                   CREATE TABLE IF NOT EXISTS diet_types (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       ad VARCHAR(100) UNIQUE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS diet_types (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ad VARCHAR(100) UNIQUE
+                );
+            """,
             "patient_diets": """
-                   CREATE TABLE IF NOT EXISTS patient_diets (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       diet_id INT NOT NULL,
-                       tarih DATE NOT NULL,
-                       uygulandi_mi BOOLEAN DEFAULT FALSE,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
-                       FOREIGN KEY (diet_id) REFERENCES diet_types(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS patient_diets (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    diet_id INT NOT NULL,
+                    tarih DATE NOT NULL,
+                    uygulandi_mi BOOLEAN DEFAULT FALSE,
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (diet_id) REFERENCES diet_types(id) ON DELETE CASCADE
+                );
+            """,
             "patient_notes": """
-                   CREATE TABLE IF NOT EXISTS patient_notes (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       doktor_id INT NOT NULL,
-                       not_metni TEXT,
-                       tarih DATE NOT NULL,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
-                       FOREIGN KEY (doktor_id) REFERENCES users(id) ON DELETE CASCADE
-                   );
-               """,
+                CREATE TABLE IF NOT EXISTS patient_notes (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    doktor_id INT NOT NULL,
+                    not_metni TEXT,
+                    tarih DATE NOT NULL,
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY (doktor_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+            """,
             "alerts": """
-                   CREATE TABLE IF NOT EXISTS alerts (
-                       id INT AUTO_INCREMENT PRIMARY KEY,
-                       hasta_id INT NOT NULL,
-                       tarih DATETIME NOT NULL,
-                       uyari_tipi VARCHAR(50),
-                       mesaj TEXT NOT NULL,
-                       FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE
-                   );
-               """
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    hasta_id INT NOT NULL,
+                    tarih DATETIME NOT NULL,
+                    uyari_tipi VARCHAR(50),
+                    mesaj TEXT NOT NULL,
+                    FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE
+                );
+            """,
+            "insulin_dose_recommendations": """
+                CREATE TABLE IF NOT EXISTS insulin_dose_recommendations (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    min_value INT NOT NULL,
+                    max_value INT NOT NULL,
+                    dose VARCHAR(10) NOT NULL
+                );
+            """
         }
 
-        for ad, sorgu in tablolar.items():
-            try:
-                self.cursor.execute(sorgu)
-                self.conn.commit()
-                print(f"✅ Tablo kontrol edildi: {ad}")
-            except Exception as e:
-                print(f"❌ Tablo oluşturulamadı ({ad}): {e}")
+
+
+
 
         for ad, sorgu in tablolar.items():
             try:
@@ -202,18 +199,26 @@ class DBManager:
             print("❌ Giriş sorgusu hatası:", e)
             return None
 
-    def olcum_ekle(self, measurement: Measurement):
-        try:
-            query = """
-                INSERT INTO measurements (hasta_id, tarih, saat, seviye)
-                VALUES (%s, %s, %s, %s);
-            """
-            values = (measurement.hasta_id, measurement.tarih, measurement.saat, measurement.seviye)
-            self.cursor.execute(query, values)
-            self.conn.commit()
-            print("✅ Ölçüm başarıyla kaydedildi.")
-        except Exception as e:
-            print(f"❌ Ölçüm eklenemedi: {e}")
+    def olcum_ekle(self, measurement):
+        sql = """
+            INSERT INTO measurements (hasta_id, tarih, saat, zaman_dilimi, seviye)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        self.cursor.execute(sql, (
+            measurement.hasta_id,
+            measurement.tarih,
+            measurement.saat,
+            measurement.zaman_dilimi,
+            measurement.seviye
+        ))
+        self.conn.commit()
+
+    def zaten_var_mi(self, hasta_id, tarih, zaman_dilimi):
+        self.cursor.execute("""
+            SELECT COUNT(*) FROM measurements
+            WHERE hasta_id = %s AND tarih = %s AND zaman_dilimi = %s
+        """, (hasta_id, tarih, zaman_dilimi))
+        return self.cursor.fetchone()[0] > 0
 
     def semptom_tanimla(self, ad):
         try:

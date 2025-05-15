@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QMessageBox
-from ui.patient_register_window import PatientRegisterWindow  # hasta kayıt ekranı
-from ui.patient_list_window import PatientListWindow  # hasta listeleme ekranı
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QFrame
+from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtCore import Qt
+from ui.patient_register_window import PatientRegisterWindow
+from ui.patient_list_window import PatientListWindow
 
 class DoctorWindow(QWidget):
     def __init__(self, doctor_adi, doctor_id):
@@ -11,12 +13,35 @@ class DoctorWindow(QWidget):
         self.register_window = None
 
         self.setWindowTitle("Doktor Paneli")
-        self.setGeometry(100, 100, 400, 300)
+        self.showMaximized()  # 👈 Tam ekran başlat
 
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignCenter)
+
+        # 🖼️ Profil çerçevesi
+        self.profil_frame = QFrame()
+        self.profil_frame.setFixedSize(160, 160)
+        self.profil_frame.setStyleSheet("""
+            QFrame {
+                border: 3px solid #CCCCCC;
+                border-radius: 80px;
+                background-color: white;
+            }
+        """)
+
+        self.profil_label = QLabel(self.profil_frame)
+        self.profil_label.setGeometry(5, 5, 150, 150)
+        self.profil_label.setAlignment(Qt.AlignCenter)
+        self.profil_label.setStyleSheet("border-radius: 75px; background-color: transparent;")
+        pixmap = QPixmap("assets/default_user.png").scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.profil_label.setPixmap(pixmap)
+
+        # 👨‍⚕️ Hoş geldiniz mesajı
         self.label = QLabel(f"👨‍⚕️ Hoş geldiniz, Dr. {doctor_adi}")
-        self.label.setStyleSheet("font-size: 16px;")
+        self.label.setFont(QFont("Arial", 16))
+        self.label.setAlignment(Qt.AlignCenter)
 
-        # Butonlar
+        # 🔘 Butonlar
         self.button_hasta_ekle = QPushButton("🆕 Yeni Hasta Ekle")
         self.button_hasta_ekle.clicked.connect(self.hasta_ekle)
 
@@ -26,9 +51,10 @@ class DoctorWindow(QWidget):
         self.button_cikis = QPushButton("🚪 Çıkış Yap")
         self.button_cikis.clicked.connect(self.cikis_yap)
 
-        # Layout
-        layout = QVBoxLayout()
+        layout.addWidget(self.profil_frame)
+        layout.addSpacing(10)
         layout.addWidget(self.label)
+        layout.addSpacing(15)
         layout.addWidget(self.button_hasta_ekle)
         layout.addWidget(self.button_goster)
         layout.addWidget(self.button_cikis)
