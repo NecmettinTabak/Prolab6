@@ -1,5 +1,5 @@
 class Alert:
-    def __init__(self, id, hasta_id, tarih, uyarı_tipi, mesaj):
+    def __init__(self, hasta_id, tarih, uyarı_tipi, mesaj, id=None):
         self.id = id
         self.hasta_id = hasta_id
         self.tarih = tarih
@@ -7,4 +7,4 @@ class Alert:
         self.mesaj = mesaj
 
     def __repr__(self):
-        return f"Alert({self.id}, {self.hasta_id}, {self.tarih}, {self.uyarı_tipi}, {self.mesaj})"
+        return f"Alert(id={self.id}, hasta_id={self.hasta_id}, tarih={self.tarih}, uyarı_tipi='{self.uyarı_tipi}', mesaj='{self.mesaj}')"
