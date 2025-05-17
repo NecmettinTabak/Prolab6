@@ -8,16 +8,18 @@ class PatientDetailWindow(QDialog):
         super().__init__()
         self.hasta = hasta
         self.setWindowTitle(f"{hasta.ad} {hasta.soyad} - Detaylar")
-        self.setGeometry(200, 200, 450, 450)
+        self.setGeometry(200, 200, 500, 600)
 
         layout = QVBoxLayout()
         self.label = QLabel(f"🧍 Hasta: {hasta.ad} {hasta.soyad} - TC: {hasta.tc_no}")
         self.tarih_secici = QDateEdit()
         self.tarih_secici.setCalendarPopup(True)
         self.tarih_secici.setDate(QDate.currentDate())
-        self.tarih_secici.dateChanged.connect(self.yukle_olcumler)
+        self.tarih_secici.dateChanged.connect(self.yenile)
 
         self.olcum_listesi = QListWidget()
+        self.uyari_listesi = QListWidget()  # 🔔 Uyarılar için ek liste
+
         self.oneri_button = QPushButton("🧠 Öneri Göster")
         self.oneri_button.clicked.connect(self.oneri_goster)
         self.ata_button = QPushButton("✅ Öneriyi Ata")
@@ -26,16 +28,25 @@ class PatientDetailWindow(QDialog):
         layout.addWidget(self.label)
         layout.addWidget(QLabel("📅 Tarih Seç:"))
         layout.addWidget(self.tarih_secici)
+
         layout.addWidget(QLabel("📊 Kan Şekeri Ölçümleri:"))
         layout.addWidget(self.olcum_listesi)
+
+        layout.addWidget(QLabel("🔔 Uyarılar:"))
+        layout.addWidget(self.uyari_listesi)
+
         layout.addWidget(self.oneri_button)
         layout.addWidget(self.ata_button)
         self.setLayout(layout)
 
         self.db = DBManager(password="Necmettin2004")
         self.oneri = None
-        self.yukle_olcumler()
+        self.yenile()
         self.db.kapat()
+
+    def yenile(self):
+        self.yukle_olcumler()
+        self.yukle_uyarilar()
 
     def yukle_olcumler(self):
         try:
@@ -57,9 +68,33 @@ class PatientDetailWindow(QDialog):
                     self.olcum_listesi.addItem(f"📅 {t} ⏰ {s} → {seviye} mg/dL{zaman_str}")
 
             db.kapat()
-
         except Exception as e:
             self.olcum_listesi.addItem(f"Hata: {e}")
+
+    def yukle_uyarilar(self):
+        try:
+            self.uyari_listesi.clear()
+            secili_tarih = self.tarih_secici.date().toPyDate()
+
+            db = DBManager(password="Necmettin2004")
+            db.cursor.execute(
+                "SELECT tarih, uyarı_tipi, mesaj FROM alerts WHERE hasta_id = %s ORDER BY tarih DESC",
+                (self.hasta.id,)
+            )
+            uyarilar = db.cursor.fetchall()
+            db.kapat()
+
+            bulundu = False
+            for tarih_saat, uyarı_tipi, mesaj in uyarilar:
+                if tarih_saat.date() == secili_tarih:
+                    bulundu = True
+                    self.uyari_listesi.addItem(f"📅 {tarih_saat} → {uyarı_tipi.upper()}: {mesaj}")
+
+            if not bulundu:
+                self.uyari_listesi.addItem("Seçilen tarihte uyarı yok.")
+
+        except Exception as e:
+            self.uyari_listesi.addItem(f"Hata: {e}")
 
     def oneri_goster(self):
         try:

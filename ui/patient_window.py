@@ -1,9 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QMessageBox, QFrame
-from PyQt5.QtGui import QPixmap, QFont, QPainter, QBrush, QColor
+from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 from ui.measurement_form import MeasurementForm
 from ui.daily_tracking_form import DailyTrackingForm
 from ui.patient_recommendation_window import PatientRecommendationWindow
+from database.db_manager import DBManager
 
 class PatientWindow(QWidget):
     def __init__(self, hasta_adi, hasta_id):
@@ -17,7 +18,7 @@ class PatientWindow(QWidget):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
-        # 🖼️ Profil çerçevesi
+        # Profil çerçevesi
         self.profil_frame = QFrame()
         self.profil_frame.setFixedSize(160, 160)
         self.profil_frame.setStyleSheet("""
@@ -35,24 +36,25 @@ class PatientWindow(QWidget):
         pixmap = QPixmap("assets/default_user.png").scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.profil_label.setPixmap(pixmap)
 
-        # 👤 Hoş geldiniz
+        # Karşılama
         self.label = QLabel(f"🧍‍♂️ Hoş geldiniz, {hasta_adi}")
         self.label.setFont(QFont("Arial", 16))
         self.label.setAlignment(Qt.AlignCenter)
 
-        # 🔘 Butonlar
-        self.button_olcum = QPushButton("📥 Ölçüm Girişi")
-        self.button_takip = QPushButton("📝 Günlük Takip")
+        # Butonlar
+        self.button_olcum = QPushButton("📅 Ölçüm Girişi")
+        self.button_takip = QPushButton("🗒 Günlük Takip")
         self.button_oneriler = QPushButton("🧠 Önerilerim")
-        self.button_goster = QPushButton("📊 Kan Şekeri Takibi (yakında)")
+        self.button_goster = QPushButton("📊 Kan Şekeri Takibi")
         self.button_cikis = QPushButton("🚪 Çıkış Yap")
 
         self.button_olcum.clicked.connect(self.olcum_formu_ac)
         self.button_takip.clicked.connect(self.takip_formu_ac)
         self.button_oneriler.clicked.connect(self.onerileri_goster)
-        self.button_goster.clicked.connect(self.takip_goster)
+        self.button_goster.clicked.connect(self.insulin_onerisi_goster)
         self.button_cikis.clicked.connect(self.close)
 
+        # Yerleşim
         layout.addWidget(self.profil_frame)
         layout.addSpacing(10)
         layout.addWidget(self.label)
@@ -92,5 +94,19 @@ class PatientWindow(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Öneri penceresi açılamadı: {e}")
 
-    def takip_goster(self):
-        QMessageBox.information(self, "Bilgi", "Bu özellik yakında eklenecek.")
+    def insulin_onerisi_goster(self):
+        try:
+            db = DBManager(password="Necmettin2004")
+            sonuc = db.insulin_dozu_getir(self.hasta_id)
+            db.kapat()
+
+            if sonuc:
+                ortalama, doz, adet = sonuc
+                QMessageBox.information(self, "💉 İnsülin Önerisi",
+                                        f"🔬 Ortalama Şeker: {ortalama} mg/dL\n"
+                                        f"📈 Ölçüm Sayısı: {adet}\n"
+                                        f"💉 Önerilen İnsülin Dozu: {doz}")
+            else:
+                QMessageBox.information(self, "Bilgi", "Bugün için yeterli ölçüm yok.\nEn az 3 zaman dilimi gerekir.")
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"İnsülin önerisi alınamadı:\n{e}")

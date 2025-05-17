@@ -47,40 +47,12 @@ def diet_ve_egzersiz_ekle():
         cursor.close()
         conn.close()
 
-def recommendation_rules_ekle():
-    try:
-        conn = pymysql.connect(
-            host="localhost",
-            user="root",
-            password="Necmettin2004",
-            database="diyabet_takip",
-            charset="utf8mb4"
-        )
-        cursor = conn.cursor()
-        rules = [
-            (70, 110, "Poliüri,Yorgunluk", 1, 1),
-            (111, 180, "Yorgunluk,Nöropati,Bulanık görme", 2, 3),
-            (181, 1000, "Yaraların yavaş iyileşmesi,Kilo kaybı", 2, 1),
-            (0, 69, "Nöropati,Polidipsi,Yorgunluk", 3, None),
-        ]
-        cursor.executemany("""
-        INSERT IGNORE INTO recommendation_rules (min_seker, max_seker, belirtiler, diyet_id, egzersiz_id)
-        VALUES (%s, %s, %s, %s, %s)
-        """, rules)
 
-        conn.commit()
-        print("📌 Öneri kuralları başarıyla eklendi.")
-    except Exception as e:
-        print(f"❌ Veri ekleme hatası: {e}")
-    finally:
-        cursor.close()
-        conn.close()
 
 
 if __name__ == "__main__":
     doktor_ekle()
-    diet_ve_egzersiz_ekle()
-    recommendation_rules_ekle()
+    #diet_ve_egzersiz_ekle()
 
 
     app = QApplication(sys.argv)

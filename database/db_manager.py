@@ -8,6 +8,7 @@ from models.diet_type import DietType
 from models.patient_diet import PatientDiet
 from models.patient_note import PatientNote
 from models.alert import Alert
+from datetime import datetime
 
 class DBManager:
     def __init__(self, host="localhost", user="root", password="", database="diyabet_takip"):
@@ -134,7 +135,7 @@ class DBManager:
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     hasta_id INT NOT NULL,
                     tarih DATETIME NOT NULL,
-                    uyari_tipi VARCHAR(50),
+                    uyarı_tipi VARCHAR(50),
                     mesaj TEXT NOT NULL,
                     FOREIGN KEY (hasta_id) REFERENCES users(id) ON DELETE CASCADE
                 );
@@ -212,6 +213,10 @@ class DBManager:
             measurement.seviye
         ))
         self.conn.commit()
+        print("✅ Ölçüm verisi eklendi.")
+
+        # Uyarı sistemini çağır
+        self.gunluk_olcum_uyarilarini_kontrol_et(measurement.hasta_id, measurement.tarih)
 
     def zaten_var_mi(self, hasta_id, tarih, zaman_dilimi):
         self.cursor.execute("""
@@ -349,3 +354,118 @@ class DBManager:
         except Exception as e:
             print(f"❌ Hastalar getirilemedi: {e}")
             return []
+
+
+    def gunluk_olcum_uyarilarini_kontrol_et(self, hasta_id: int, tarih: str):
+            beklenen_dilimler = {"sabah", "ogle", "ikindi", "aksam", "gece"}
+
+            self.cursor.execute("""
+                SELECT zaman_dilimi, seviye FROM measurements
+                WHERE hasta_id = %s AND tarih = %s AND zaman_dilimi IS NOT NULL
+            """, (hasta_id, tarih))
+            veriler = self.cursor.fetchall()
+
+            girilen_dilimler = set()
+            kritik_var = False
+            for zaman_dilimi, seviye in veriler:
+                girilen_dilimler.add(zaman_dilimi)
+                if seviye < 70 or seviye > 200:
+                    kritik_var = True
+
+            eksikler = beklenen_dilimler - girilen_dilimler
+            eksik_sayisi = len(eksikler)
+            toplam = len(girilen_dilimler)
+            simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            if kritik_var:
+                self.uyarı_ekle(Alert(hasta_id, simdi, "Acil Uyarı",
+                                      "Kritik ölçüm değeri tespit edildi! Doktor müdahalesi gerekebilir."))
+
+            if eksik_sayisi > 0:
+                eksik_liste = ", ".join(sorted(eksikler)).upper()
+                mesaj = f"Bugün şu zaman dilimlerinde ölçüm eksik: {eksik_liste}"
+                self.uyarı_ekle(Alert(hasta_id, simdi, "Ölçüm Eksik", mesaj))
+
+            if toplam < 3:
+                self.uyarı_ekle(Alert(hasta_id, simdi, "Yetersiz Veri",
+                                      f"Bugün sadece {toplam} ölçüm girildi. Ortalama hesaplaması güvenilir değildir."))
+
+    def son_gun_insulin_onerisi(self, hasta_id):
+        try:
+            # En son ölçüm yapılan tarih alınır
+            self.cursor.execute("""
+                SELECT tarih FROM measurements
+                WHERE hasta_id = %s
+                ORDER BY tarih DESC
+                LIMIT 1
+            """, (hasta_id,))
+            tarih_result = self.cursor.fetchone()
+            if not tarih_result:
+                return None, "Şu ana kadar hiç ölçüm yok."
+
+            son_tarih = tarih_result[0]
+
+            # O tarihteki tüm ölçümler alınır
+            self.cursor.execute("""
+                SELECT seviye FROM measurements
+                WHERE hasta_id = %s AND tarih = %s
+            """, (hasta_id, son_tarih))
+            seviye_listesi = [row[0] for row in self.cursor.fetchall()]
+
+            if len(seviye_listesi) < 1:
+                return None, "Bugün için hiç ölçüm girilmemiş."
+
+            ortalama = sum(seviye_listesi) / len(seviye_listesi)
+
+            # Ortalama değer hangi aralıktaysa uygun dozu bul
+            self.cursor.execute("""
+                SELECT dose FROM insulin_dose_recommendations
+                WHERE %s BETWEEN min_value AND max_value
+                LIMIT 1
+            """, (ortalama,))
+            sonuc = self.cursor.fetchone()
+
+            if sonuc:
+                return f"{ortalama:.1f} mg/dL", sonuc[0]
+            else:
+                return f"{ortalama:.1f} mg/dL", "Tanımsız"
+
+        except Exception as e:
+            return None, f"Hata: {e}"
+
+    def insulin_dozu_getir(self, hasta_id):
+        try:
+            import datetime
+            bugun = datetime.date.today()
+            bugun_str = bugun.strftime("%Y-%m-%d")
+
+            self.cursor.execute("""
+                SELECT seviye FROM measurements
+                WHERE hasta_id = %s AND tarih = %s
+                  AND LOWER(TRIM(zaman_dilimi)) IN ('sabah', 'ogle', 'ikindi', 'aksam', 'gece')
+            """, (hasta_id, bugun_str))
+
+            seviyeler = [row[0] for row in self.cursor.fetchall()]
+            adet = len(seviyeler)
+
+            if adet < 3:
+                return None
+
+            ortalama = sum(seviyeler) / adet
+
+            self.cursor.execute("""
+                SELECT dose FROM insulin_dose_recommendations
+                WHERE %s BETWEEN min_value AND max_value
+                LIMIT 1
+            """, (ortalama,))
+            doz_sonuc = self.cursor.fetchone()
+
+            return (round(ortalama, 1), doz_sonuc[0] if doz_sonuc else "Tanımsız", adet)
+
+        except Exception as e:
+            print("❌ İnsülin dozu hatası:", e)
+            return None
+
+
+
+
