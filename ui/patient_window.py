@@ -1,10 +1,12 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QMessageBox, QFrame
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QPainter, QPainterPath
 from PyQt5.QtCore import Qt
 from ui.measurement_form import MeasurementForm
 from ui.daily_tracking_form import DailyTrackingForm
 from ui.patient_recommendation_window import PatientRecommendationWindow
+#from ui.graph_window import GraphWindow  # 📊 Yeni pencereyi dahil et
 from database.db_manager import DBManager
+from ui.GraphWindow import GraphWindow
 
 class PatientWindow(QWidget):
     def __init__(self, hasta_adi, hasta_id):
@@ -18,7 +20,6 @@ class PatientWindow(QWidget):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
-        # Profil çerçevesi
         self.profil_frame = QFrame()
         self.profil_frame.setFixedSize(160, 160)
         self.profil_frame.setStyleSheet("""
@@ -33,28 +34,38 @@ class PatientWindow(QWidget):
         self.profil_label.setGeometry(5, 5, 150, 150)
         self.profil_label.setAlignment(Qt.AlignCenter)
         self.profil_label.setStyleSheet("border-radius: 75px; background-color: transparent;")
-        pixmap = QPixmap("assets/default_user.png").scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.profil_label.setPixmap(pixmap)
+        pixmap = QPixmap("assets/default_patient.png").scaled(150, 150, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+        rounded = QPixmap(150, 150)
+        rounded.fill(Qt.transparent)
 
-        # Karşılama
+        painter = QPainter(rounded)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addEllipse(0, 0, 150, 150)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+
+        self.profil_label.setPixmap(rounded)
+
         self.label = QLabel(f"🧍‍♂️ Hoş geldiniz, {hasta_adi}")
         self.label.setFont(QFont("Arial", 16))
         self.label.setAlignment(Qt.AlignCenter)
 
-        # Butonlar
         self.button_olcum = QPushButton("📅 Ölçüm Girişi")
         self.button_takip = QPushButton("🗒 Günlük Takip")
         self.button_oneriler = QPushButton("🧠 Önerilerim")
         self.button_goster = QPushButton("📊 Kan Şekeri Takibi")
+        self.grafik_buton = QPushButton("📊 Günlük Kan Şekeri Grafiği")
         self.button_cikis = QPushButton("🚪 Çıkış Yap")
 
         self.button_olcum.clicked.connect(self.olcum_formu_ac)
         self.button_takip.clicked.connect(self.takip_formu_ac)
         self.button_oneriler.clicked.connect(self.onerileri_goster)
         self.button_goster.clicked.connect(self.insulin_onerisi_goster)
+        self.grafik_buton.clicked.connect(self.grafik_goster)
         self.button_cikis.clicked.connect(self.close)
 
-        # Yerleşim
         layout.addWidget(self.profil_frame)
         layout.addSpacing(10)
         layout.addWidget(self.label)
@@ -63,6 +74,7 @@ class PatientWindow(QWidget):
         layout.addWidget(self.button_takip)
         layout.addWidget(self.button_oneriler)
         layout.addWidget(self.button_goster)
+        layout.addWidget(self.grafik_buton)
         layout.addWidget(self.button_cikis)
 
         self.setLayout(layout)
@@ -110,3 +122,10 @@ class PatientWindow(QWidget):
                 QMessageBox.information(self, "Bilgi", "Bugün için yeterli ölçüm yok.\nEn az 3 zaman dilimi gerekir.")
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"İnsülin önerisi alınamadı:\n{e}")
+
+    def grafik_goster(self):
+        try:
+            pencere = GraphWindow(self.hasta_id)
+            pencere.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "Hata", f"Grafik penceresi açılamadı: {e}")

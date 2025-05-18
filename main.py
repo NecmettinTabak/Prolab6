@@ -9,11 +9,11 @@ def doktor_ekle():
     db = DBManager(password="Necmettin2004")
     kullanici = User(
         id=None,
-        tc_no="11345678111",
+        tc_no="11345678112",
         ad="Ali",
         soyad="Yılmaz",
         email="ali@example.com",
-        sifre="123458",
+        sifre="123459",
         cinsiyet="Erkek",
         dogum_tarihi="1995-06-15",
         rol="doktor",
