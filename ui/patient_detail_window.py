@@ -78,20 +78,21 @@ class PatientDetailWindow(QDialog):
 
             db = DBManager(password="Necmettin2004")
             db.cursor.execute(
-                "SELECT tarih, uyarı_tipi, mesaj FROM alerts WHERE hasta_id = %s ORDER BY tarih DESC",
-                (self.hasta.id,)
+                """
+                SELECT tarih, uyarı_tipi, mesaj FROM alerts
+                WHERE hasta_id = %s AND DATE(tarih) = %s
+                ORDER BY tarih DESC
+                """,
+                (self.hasta.id, secili_tarih)
             )
             uyarilar = db.cursor.fetchall()
             db.kapat()
 
-            bulundu = False
-            for tarih_saat, uyarı_tipi, mesaj in uyarilar:
-                if tarih_saat.date() == secili_tarih:
-                    bulundu = True
-                    self.uyari_listesi.addItem(f"📅 {tarih_saat} → {uyarı_tipi.upper()}: {mesaj}")
-
-            if not bulundu:
+            if not uyarilar:
                 self.uyari_listesi.addItem("Seçilen tarihte uyarı yok.")
+            else:
+                for tarih_saat, uyarı_tipi, mesaj in uyarilar:
+                    self.uyari_listesi.addItem(f"📅 {tarih_saat} → {uyarı_tipi.upper()}: {mesaj}")
 
         except Exception as e:
             self.uyari_listesi.addItem(f"Hata: {e}")

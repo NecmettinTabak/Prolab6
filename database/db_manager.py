@@ -9,6 +9,7 @@ from models.patient_diet import PatientDiet
 from models.patient_note import PatientNote
 from models.alert import Alert
 from datetime import datetime
+from logic.utils import hash_sifre
 
 class DBManager:
     def __init__(self, host="localhost", user="root", password="", database="diyabet_takip"):
@@ -174,7 +175,7 @@ class DBManager:
             """
             values = (
                 user.tc_no, user.ad, user.soyad, user.email,
-                user.sifre, user.cinsiyet, user.dogum_tarihi,
+                hash_sifre(user.sifre), user.cinsiyet, user.dogum_tarihi,
                 user.rol, user.profil_resmi, user.doktor_id  # <-- doktor_id eklendi
             )
             self.cursor.execute(query, values)
@@ -355,41 +356,40 @@ class DBManager:
             print(f"❌ Hastalar getirilemedi: {e}")
             return []
 
-
     def gunluk_olcum_uyarilarini_kontrol_et(self, hasta_id: int, tarih: str):
-            beklenen_dilimler = {"sabah", "ogle", "ikindi", "aksam", "gece"}
+        beklenen_dilimler = {"sabah", "ogle", "ikindi", "aksam", "gece"}
 
-            self.cursor.execute("""
-                SELECT zaman_dilimi, seviye FROM measurements
-                WHERE hasta_id = %s AND tarih = %s AND zaman_dilimi IS NOT NULL
-            """, (hasta_id, tarih))
-            veriler = self.cursor.fetchall()
+        self.cursor.execute("""
+            SELECT zaman_dilimi, seviye FROM measurements
+            WHERE hasta_id = %s AND tarih = %s AND zaman_dilimi IS NOT NULL
+        """, (hasta_id, tarih))
+        veriler = self.cursor.fetchall()
 
-            girilen_dilimler = set()
-            kritik_var = False
-            for zaman_dilimi, seviye in veriler:
-                girilen_dilimler.add(zaman_dilimi)
-                if seviye < 70 or seviye > 200:
-                    kritik_var = True
+        girilen_dilimler = set()
+        kritik_var = False
+        for zaman_dilimi, seviye in veriler:
+            girilen_dilimler.add(zaman_dilimi)
+            if seviye < 70 or seviye > 200:
+                kritik_var = True
 
-            eksikler = beklenen_dilimler - girilen_dilimler
-            eksik_sayisi = len(eksikler)
-            toplam = len(girilen_dilimler)
-            simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        eksikler = beklenen_dilimler - girilen_dilimler
+        eksik_sayisi = len(eksikler)
+        toplam = len(girilen_dilimler)
+        simdi = datetime.now()
 
-            if kritik_var:
-                self.uyarı_ekle(Alert(hasta_id, simdi, "Acil Uyarı",
-                                      "Kritik ölçüm değeri tespit edildi! Doktor müdahalesi gerekebilir."))
 
-            if eksik_sayisi > 0:
-                eksik_liste = ", ".join(sorted(eksikler)).upper()
-                mesaj = f"Bugün şu zaman dilimlerinde ölçüm eksik: {eksik_liste}"
-                self.uyarı_ekle(Alert(hasta_id, simdi, "Ölçüm Eksik", mesaj))
+        if kritik_var:
+            self.uyarı_ekle(Alert(hasta_id, simdi, "Acil Uyarı",
+                                  "Kritik ölçüm değeri tespit edildi! Doktor müdahalesi gerekebilir."))
 
-            if toplam < 3:
-                self.uyarı_ekle(Alert(hasta_id, simdi, "Yetersiz Veri",
-                                      f"Bugün sadece {toplam} ölçüm girildi. Ortalama hesaplaması güvenilir değildir."))
+        if eksik_sayisi > 0:
+            eksik_liste = ", ".join(sorted(eksikler)).upper()
+            mesaj = f"Bugün şu zaman dilimlerinde ölçüm eksik: {eksik_liste}"
+            self.uyarı_ekle(Alert(hasta_id, simdi, "Ölçüm Eksik", mesaj))
 
+        if toplam < 3:
+            self.uyarı_ekle(Alert(hasta_id, simdi, "Yetersiz Veri",
+                                  f"Bugün sadece {toplam} ölçüm girildi. Ortalama hesaplaması güvenilir değildir."))
     def son_gun_insulin_onerisi(self, hasta_id):
         try:
             # En son ölçüm yapılan tarih alınır
@@ -448,8 +448,8 @@ class DBManager:
             seviyeler = [row[0] for row in self.cursor.fetchall()]
             adet = len(seviyeler)
 
-            if adet < 3:
-                return None
+            if adet == 0:
+                return None  # hiç ölçüm yok
 
             ortalama = sum(seviyeler) / adet
 
@@ -465,6 +465,49 @@ class DBManager:
         except Exception as e:
             print("❌ İnsülin dozu hatası:", e)
             return None
+
+    def filtreli_hasta_getir(self, doktor_id, min_seker=None, max_seker=None, semptom_listesi=None):
+        try:
+            query = """
+                SELECT DISTINCT u.*
+                FROM users u
+                LEFT JOIN measurements m ON u.id = m.hasta_id
+                LEFT JOIN patient_symptom ps ON u.id = ps.hasta_id
+                LEFT JOIN symptoms s ON ps.symptom_id = s.id
+                WHERE u.doktor_id = %s
+            """
+            values = [doktor_id]
+
+            # Kan şekeri filtresi (doğru sütun adı: seviye)
+            if min_seker:
+                query += " AND m.seviye >= %s"
+                values.append(float(min_seker))
+
+            if max_seker:
+                query += " AND m.seviye <= %s"
+                values.append(float(max_seker))
+
+            # Belirti filtresi (doğru sütun adı: s.ad)
+            if semptom_listesi:
+                placeholders = ','.join(['%s'] * len(semptom_listesi))
+                query += f" AND s.ad IN ({placeholders})"
+                values.extend(semptom_listesi)
+
+            query += " GROUP BY u.id ORDER BY u.ad"
+
+            self.cursor.execute(query, values)
+            rows = self.cursor.fetchall()
+
+            from models.user import User
+            hastalar = [User(*row) for row in rows]
+            return hastalar
+
+        except Exception as e:
+            print(f"❌ Filtreli hasta getirme hatası: {e}")
+            return []
+
+
+
 
 
 

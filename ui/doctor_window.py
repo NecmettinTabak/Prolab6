@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QFrame
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QPainter, QPainterPath
 from PyQt5.QtCore import Qt
 from ui.patient_register_window import PatientRegisterWindow
 from ui.patient_list_window import PatientListWindow
@@ -33,8 +33,20 @@ class DoctorWindow(QWidget):
         self.profil_label.setGeometry(5, 5, 150, 150)
         self.profil_label.setAlignment(Qt.AlignCenter)
         self.profil_label.setStyleSheet("border-radius: 75px; background-color: transparent;")
-        pixmap = QPixmap("assets/default_user.png").scaled(150, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.profil_label.setPixmap(pixmap)
+        pixmap = QPixmap("assets/default_doctor.png").scaled(150, 150, Qt.KeepAspectRatioByExpanding,
+                                                             Qt.SmoothTransformation)
+        rounded = QPixmap(150, 150)
+        rounded.fill(Qt.transparent)
+
+        painter = QPainter(rounded)
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addEllipse(0, 0, 150, 150)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+        painter.end()
+
+        self.profil_label.setPixmap(rounded)
 
         # 👨‍⚕️ Hoş geldiniz mesajı
         self.label = QLabel(f"👨‍⚕️ Hoş geldiniz, Dr. {doctor_adi}")

@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from database.db_manager import DBManager
 from ui.doctor_window import DoctorWindow
 from ui.patient_window import PatientWindow
+from logic.utils import hash_sifre
 
 class LoginWindow(QWidget):
     def __init__(self):
@@ -49,6 +50,7 @@ class LoginWindow(QWidget):
     def giris_yap(self):
         tc_no = self.input_tc.text()
         sifre = self.input_sifre.text()
+        sifre = hash_sifre(sifre)
 
         db = DBManager(password="Necmettin2004")
         user = db.kullanici_getir(tc_no, sifre)
