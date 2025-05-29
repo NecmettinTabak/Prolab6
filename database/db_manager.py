@@ -470,17 +470,17 @@ class DBManager:
             query = """
                     SELECT DISTINCT u.*
                     FROM users u
-                             JOIN assigned_recommendations ar ON u.id = ar.hasta_id AND ar.tarih = CURRENT_DATE
+                             JOIN assigned_recommendations ar ON u.id = ar.hasta_id
                              JOIN recommendation_rules r ON ar.rule_id = r.id
-                    WHERE u.doktor_id = %s \
+                    WHERE u.doktor_id = %s
                     """
             values = [doktor_id]
 
             if min_seker:
-                query += " AND %s BETWEEN r.min_seker AND r.max_seker"
+                query += " AND r.max_seker >= %s"
                 values.append(float(min_seker))
             if max_seker:
-                query += " AND %s BETWEEN r.min_seker AND r.max_seker"
+                query += " AND r.min_seker <= %s"
                 values.append(float(max_seker))
 
             if semptom_listesi:
