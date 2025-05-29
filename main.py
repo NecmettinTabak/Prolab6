@@ -3,7 +3,7 @@ import sys
 from database.db_manager import DBManager
 from models.kullanici import User
 import pymysql
-from ui.kayit_ol_penceresi import LoginWindow
+from ui.giris_penceresi import LoginWindow
 
 
 def doktor_ekle():
