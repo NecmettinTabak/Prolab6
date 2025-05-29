@@ -1,21 +1,22 @@
 from PyQt5.QtWidgets import QApplication
 import sys
 from database.db_manager import DBManager
-from models.user import User
-from ui.login_window import LoginWindow
+from models.kullanici import User
 import pymysql
+from ui.kayit_ol_penceresi import LoginWindow
+
 
 def doktor_ekle():
-    db = DBManager(password="Necmettin2004")
+    db = DBManager(password="Hekim11322..")
     kullanici = User(
         id=None,
-        tc_no="11345678112",
-        ad="Ali",
-        soyad="Yılmaz",
-        email="ali@example.com",
-        sifre="123459",
+        tc_no="88888888888",
+        ad="Ferhat",
+        soyad="Göçer",
+        email="caresizAsk@example.com",
+        sifre="111111",
         cinsiyet="Erkek",
-        dogum_tarihi="1995-06-15",
+        dogum_tarihi="1992-08-01",
         rol="doktor",
         profil_resmi=None,
         doktor_id=None
@@ -28,7 +29,7 @@ def diet_ve_egzersiz_ekle():
         conn = pymysql.connect(
             host="localhost",
             user="root",
-            password="Necmettin2004",
+            password="Hekim11322..",
             database="diyabet_takip",
             charset="utf8mb4"
         )
@@ -52,7 +53,6 @@ def diet_ve_egzersiz_ekle():
 
 if __name__ == "__main__":
     doktor_ekle()
-    #diet_ve_egzersiz_ekle()
 
 
     app = QApplication(sys.argv)

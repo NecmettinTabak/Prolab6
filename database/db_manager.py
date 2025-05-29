@@ -1,15 +1,15 @@
 import pymysql
-from models.user import User
-from models.measurement import Measurement
-from models.patient_symptom import PatientSymptom
-from models.exercise_type import ExerciseType
-from models.patient_exercise import PatientExercise
-from models.diet_type import DietType
-from models.patient_diet import PatientDiet
-from models.patient_note import PatientNote
-from models.alert import Alert
+from models.kullanici import User
+from models.olcum import Measurement
+from models.hasta_semptomlari import PatientSymptom
+from models.egzersiz_tipi import ExerciseType
+from models.hasta_egzersiz import PatientExercise
+from models.diyet_tipi import DietType
+from models.hasta_diyet import PatientDiet
+from models.hasta_not import PatientNote
+from models.uyari import Alert
 from datetime import datetime
-from logic.utils import hash_sifre
+from logic.sifreleme import hash_sifre
 
 class DBManager:
     def __init__(self, host="localhost", user="root", password="", database="diyabet_takip"):
@@ -176,7 +176,7 @@ class DBManager:
             values = (
                 user.tc_no, user.ad, user.soyad, user.email,
                 hash_sifre(user.sifre), user.cinsiyet, user.dogum_tarihi,
-                user.rol, user.profil_resmi, user.doktor_id  # <-- doktor_id eklendi
+                user.rol, user.profil_resmi, user.doktor_id
             )
             self.cursor.execute(query, values)
             self.conn.commit()
@@ -216,7 +216,7 @@ class DBManager:
         self.conn.commit()
         print("✅ Ölçüm verisi eklendi.")
 
-        # Uyarı sistemini çağır
+
         self.gunluk_olcum_uyarilarini_kontrol_et(measurement.hasta_id, measurement.tarih)
 
     def zaten_var_mi(self, hasta_id, tarih, zaman_dilimi):
@@ -389,10 +389,9 @@ class DBManager:
 
         if toplam < 3:
             self.uyarı_ekle(Alert(hasta_id, simdi, "Yetersiz Veri",
-                                  f"Bugün sadece {toplam} ölçüm girildi. Ortalama hesaplaması güvenilir değildir."))
+                                  f"Bugün sadece {toplam} ölçüm girildi. Ortalama hesaplaması güvenilir değildir."))
     def son_gun_insulin_onerisi(self, hasta_id):
         try:
-            # En son ölçüm yapılan tarih alınır
             self.cursor.execute("""
                 SELECT tarih FROM measurements
                 WHERE hasta_id = %s
@@ -405,7 +404,7 @@ class DBManager:
 
             son_tarih = tarih_result[0]
 
-            # O tarihteki tüm ölçümler alınır
+
             self.cursor.execute("""
                 SELECT seviye FROM measurements
                 WHERE hasta_id = %s AND tarih = %s
@@ -417,7 +416,7 @@ class DBManager:
 
             ortalama = sum(seviye_listesi) / len(seviye_listesi)
 
-            # Ortalama değer hangi aralıktaysa uygun dozu bul
+
             self.cursor.execute("""
                 SELECT dose FROM insulin_dose_recommendations
                 WHERE %s BETWEEN min_value AND max_value
@@ -449,7 +448,7 @@ class DBManager:
             adet = len(seviyeler)
 
             if adet == 0:
-                return None  # hiç ölçüm yok
+                return None
 
             ortalama = sum(seviyeler) / adet
 
@@ -469,42 +468,58 @@ class DBManager:
     def filtreli_hasta_getir(self, doktor_id, min_seker=None, max_seker=None, semptom_listesi=None):
         try:
             query = """
-                SELECT DISTINCT u.*
-                FROM users u
-                LEFT JOIN measurements m ON u.id = m.hasta_id
-                LEFT JOIN patient_symptom ps ON u.id = ps.hasta_id
-                LEFT JOIN symptoms s ON ps.symptom_id = s.id
-                WHERE u.doktor_id = %s
-            """
+                    SELECT DISTINCT u.*
+                    FROM users u
+                             JOIN assigned_recommendations ar ON u.id = ar.hasta_id AND ar.tarih = CURRENT_DATE
+                             JOIN recommendation_rules r ON ar.rule_id = r.id
+                    WHERE u.doktor_id = %s \
+                    """
             values = [doktor_id]
 
-            # Kan şekeri filtresi (doğru sütun adı: seviye)
             if min_seker:
-                query += " AND m.seviye >= %s"
+                query += " AND %s BETWEEN r.min_seker AND r.max_seker"
                 values.append(float(min_seker))
-
             if max_seker:
-                query += " AND m.seviye <= %s"
+                query += " AND %s BETWEEN r.min_seker AND r.max_seker"
                 values.append(float(max_seker))
 
-            # Belirti filtresi (doğru sütun adı: s.ad)
             if semptom_listesi:
-                placeholders = ','.join(['%s'] * len(semptom_listesi))
-                query += f" AND s.ad IN ({placeholders})"
-                values.extend(semptom_listesi)
+                like_parts = []
+                for belirti in semptom_listesi:
+                    like_parts.append("r.belirtiler LIKE %s")
+                    values.append(f"%{belirti}%")
+                query += " AND (" + " OR ".join(like_parts) + ")"
 
-            query += " GROUP BY u.id ORDER BY u.ad"
+            query += " ORDER BY u.ad"
 
             self.cursor.execute(query, values)
             rows = self.cursor.fetchall()
-
-            from models.user import User
-            hastalar = [User(*row) for row in rows]
-            return hastalar
+            from models.kullanici import User
+            return [User(*row) for row in rows]
 
         except Exception as e:
             print(f"❌ Filtreli hasta getirme hatası: {e}")
             return []
+
+    def toplam_diyet_onerisi_gunu(self, hasta_id):
+        self.cursor.execute("""
+                            SELECT COUNT(*)
+                            FROM assigned_recommendations ar
+                                     JOIN recommendation_rules r ON ar.rule_id = r.id
+                            WHERE ar.hasta_id = %s
+                              AND r.diyet_id IS NOT NULL
+                            """, (hasta_id,))
+        return self.cursor.fetchone()[0]
+
+    def toplam_egzersiz_onerisi_gunu(self, hasta_id):
+        self.cursor.execute("""
+                            SELECT COUNT(*)
+                            FROM assigned_recommendations ar
+                                     JOIN recommendation_rules r ON ar.rule_id = r.id
+                            WHERE ar.hasta_id = %s
+                              AND r.egzersiz_id IS NOT NULL
+                            """, (hasta_id,))
+        return self.cursor.fetchone()[0]
 
 
 

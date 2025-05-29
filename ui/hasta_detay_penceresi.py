@@ -2,6 +2,8 @@ from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QListWidget, QPushButt
 from PyQt5.QtCore import QDate
 from database.db_manager import DBManager
 import datetime
+from ui.hasta_duzen_takip_penceresi import PatientAdherenceWindow
+from ui.hasta_glikoz_izleme_penceresi import PatientGlucoseTrendWindow
 
 class PatientDetailWindow(QDialog):
     def __init__(self, hasta):
@@ -18,12 +20,17 @@ class PatientDetailWindow(QDialog):
         self.tarih_secici.dateChanged.connect(self.yenile)
 
         self.olcum_listesi = QListWidget()
-        self.uyari_listesi = QListWidget()  # 🔔 Uyarılar için ek liste
+        self.uyari_listesi = QListWidget()
 
         self.oneri_button = QPushButton("🧠 Öneri Göster")
         self.oneri_button.clicked.connect(self.oneri_goster)
         self.ata_button = QPushButton("✅ Öneriyi Ata")
         self.ata_button.clicked.connect(self.oneri_ata)
+        self.gecmis_btn = QPushButton("📅 Diyet/Egzersiz Geçmişi")
+        self.gecmis_btn.clicked.connect(self.gecmis_goster)
+        self.grafik_btn = QPushButton("📈 Kan Şekeri Zaman Grafiği")
+        self.grafik_btn.clicked.connect(self.grafik_goster)
+
 
         layout.addWidget(self.label)
         layout.addWidget(QLabel("📅 Tarih Seç:"))
@@ -35,11 +42,13 @@ class PatientDetailWindow(QDialog):
         layout.addWidget(QLabel("🔔 Uyarılar:"))
         layout.addWidget(self.uyari_listesi)
 
+        layout.addWidget(self.grafik_btn)
+        layout.addWidget(self.gecmis_btn)
         layout.addWidget(self.oneri_button)
         layout.addWidget(self.ata_button)
         self.setLayout(layout)
 
-        self.db = DBManager(password="Necmettin2004")
+        self.db = DBManager(password="Hekim11322..")
         self.oneri = None
         self.yenile()
         self.db.kapat()
@@ -53,7 +62,7 @@ class PatientDetailWindow(QDialog):
             self.olcum_listesi.clear()
             tarih_str = self.tarih_secici.date().toString("yyyy-MM-dd")
 
-            db = DBManager(password="Necmettin2004")
+            db = DBManager(password="Hekim11322..")
             db.cursor.execute(
                 "SELECT tarih, saat, seviye, zaman_dilimi FROM measurements WHERE hasta_id = %s AND tarih = %s ORDER BY saat DESC",
                 (self.hasta.id, tarih_str)
@@ -76,7 +85,7 @@ class PatientDetailWindow(QDialog):
             self.uyari_listesi.clear()
             secili_tarih = self.tarih_secici.date().toPyDate()
 
-            db = DBManager(password="Necmettin2004")
+            db = DBManager(password="Hekim11322..")
             db.cursor.execute(
                 """
                 SELECT tarih, uyarı_tipi, mesaj FROM alerts
@@ -99,7 +108,7 @@ class PatientDetailWindow(QDialog):
 
     def oneri_goster(self):
         try:
-            self.db = DBManager(password="Necmettin2004")
+            self.db = DBManager(password="Hekim11322..")
             self.db.cursor.execute(
                 "SELECT seviye FROM measurements WHERE hasta_id = %s ORDER BY tarih DESC, saat DESC LIMIT 1",
                 (self.hasta.id,)
@@ -135,7 +144,7 @@ class PatientDetailWindow(QDialog):
 
     def oneri_ata(self):
         try:
-            self.db = DBManager(password="Necmettin2004")
+            self.db = DBManager(password="Hekim11322..")
             self.db.cursor.execute(
                 "SELECT seviye FROM measurements WHERE hasta_id = %s ORDER BY tarih DESC, saat DESC LIMIT 1",
                 (self.hasta.id,))
@@ -171,3 +180,11 @@ class PatientDetailWindow(QDialog):
 
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Öneri atanamadı: {e}")
+
+    def gecmis_goster(self):
+        self.uyum_penceresi = PatientAdherenceWindow(self.hasta.id)
+        self.uyum_penceresi.exec_()
+
+    def grafik_goster(self):
+        self.grafik_penceresi = PatientGlucoseTrendWindow(self.hasta.id)
+        self.grafik_penceresi.exec_()

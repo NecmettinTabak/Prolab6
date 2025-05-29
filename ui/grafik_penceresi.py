@@ -32,7 +32,7 @@ class GraphWindow(QDialog):
     def grafik_ciz(self):
         try:
             tarih = self.date_edit.date().toPyDate().strftime("%Y-%m-%d")
-            db = DBManager(password="Necmettin2004")
+            db = DBManager(password="Hekim11322..")
             db.cursor.execute("""
                 SELECT zaman_dilimi, seviye FROM measurements
                 WHERE hasta_id = %s AND tarih = %s

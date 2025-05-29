@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QPushButton, QMessageBox
 from database.db_manager import DBManager
-from models.patient_diet import PatientDiet
-from models.patient_exercise import PatientExercise
+from models.hasta_diyet import PatientDiet
+from models.hasta_egzersiz import PatientExercise
 from datetime import date
 
 class DailyTrackingForm(QDialog):
@@ -27,7 +27,7 @@ class DailyTrackingForm(QDialog):
         diyet = self.diyet_checkbox.isChecked()
         bugun = date.today().strftime("%Y-%m-%d")
 
-        db = DBManager(password="Necmettin2004")
+        db = DBManager(password="Hekim11322..")
 
         if egzersiz:
             db.hasta_egzersiz_ekle(PatientExercise(hasta_id=self.hasta_id, egzersiz_id=1, tarih=bugun, yapildi_mi=True))

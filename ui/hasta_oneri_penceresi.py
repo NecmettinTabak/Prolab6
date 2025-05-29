@@ -25,8 +25,8 @@ class PatientRecommendationWindow(QDialog):
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
 
-        self.db = DBManager(password="Necmettin2004")
-        self.yukle_oneriler()  # ilk açılışta bugünkü önerileri göster
+        self.db = DBManager(password="Hekim11322..")
+        self.yukle_oneriler()
         self.db.kapat()
 
     def yukle_oneriler(self):
@@ -34,7 +34,7 @@ class PatientRecommendationWindow(QDialog):
         secilen_tarih = self.tarih_secici.date().toString("yyyy-MM-dd")
 
         try:
-            db = DBManager(password="Necmettin2004")  # self.db yerine yerel bağ
+            db = DBManager(password="Hekim11322..")
             query = """
                 SELECT r.belirtiler, d.ad, e.ad, a.tarih
                 FROM assigned_recommendations a

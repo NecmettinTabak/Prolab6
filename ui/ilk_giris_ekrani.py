@@ -9,7 +9,7 @@ class FirstEntryWindow(QDialog):
         self.setMinimumSize(400, 300)
         self.hasta = hasta
 
-        self.db = DBManager(password="Necmettin2004")
+        self.db = DBManager(password="Hekim11322..")
         self.oneri = None
 
         layout = QVBoxLayout()
@@ -19,7 +19,7 @@ class FirstEntryWindow(QDialog):
         self.glukoz_input.setPlaceholderText("🌿 Kan Şekeri (mg/dL)")
 
         self.belirti_combo = QComboBox()
-        self.belirti_combo.addItems( ["Baş ağrısı", "Bulanık görme", "Yorgunluk", "Kilo Kaybı", "Polifaji", "Polidipsi", "Poliüri", "Yaraların Yavaş İyileşmesi"])
+        self.belirti_combo.addItems( ["Baş ağrısı", "Bulanık görme", "Yorgunluk", "Kilo Kaybı", "Polifaji","Nöropati", "Polidipsi", "Poliüri", "Yaraların Yavaş İyileşmesi"])
 
         self.btn_oneri_goster = QPushButton("🧠 Öneri Göster")
         self.btn_oneri_goster.clicked.connect(self.oneri_goster)

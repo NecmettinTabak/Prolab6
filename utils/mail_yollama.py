@@ -3,8 +3,8 @@ from email.mime.text import MIMEText
 
 def hasta_mail_gonder(ad, email, tc_no, sifre):
     try:
-        sender_email = ("tabaknecmettin@gmail.com")  # ← kendi gmail adresin
-        app_password = "gwhroovbzhfawknc"  # ← oluşturduğun uygulama şifresi (boşlukları silebilirsin)
+        sender_email = ("tabaknecmettin@gmail.com")
+        app_password = "gwhroovbzhfawknc"
 
         subject = "Diyabet Takip Sistemi - Giriş Bilgileriniz"
         body = f"""

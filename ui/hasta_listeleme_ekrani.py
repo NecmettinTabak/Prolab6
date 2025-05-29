@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QListWidget, QLabel, QPushButton, QMessageBox, QGroupBox, QCheckBox, \
     QFormLayout, QLineEdit, QHBoxLayout
 from database.db_manager import DBManager
-from ui.patient_detail_window import PatientDetailWindow
-from ui.FirstEntryWindow import FirstEntryWindow
-  # ⬅️ import düzeltildi
+from ui.hasta_detay_penceresi import PatientDetailWindow
+from ui.ilk_giris_ekrani import FirstEntryWindow
+
 
 class PatientListWindow(QDialog):
     def __init__(self, doktor_id):
@@ -20,7 +20,7 @@ class PatientListWindow(QDialog):
         self.list_widget = QListWidget()
         layout.addWidget(self.list_widget)
 
-        # 🩸 Kan şekeri aralığı filtresi
+
         self.seker_min_input = QLineEdit()
         self.seker_min_input.setPlaceholderText("Min Şeker")
         self.seker_max_input = QLineEdit()
@@ -34,8 +34,8 @@ class PatientListWindow(QDialog):
         seker_group.setLayout(seker_layout)
         layout.addWidget(seker_group)
 
-        # 🤒 Semptom filtresi
-        self.semptomlar = ["Baş ağrısı", "Bulanık görme", "Yorgunluk", "Kilo Kaybı", "Polifaji", "Polidipsi", "Poliüri",
+
+        self.semptomlar = ["Baş ağrısı", "Bulanık görme", "Yorgunluk", "Kilo Kaybı", "Polifaji", "Polidipsi","Nöropati", "Poliüri",
                            "Yaraların Yavaş İyileşmesi"]
         self.semptom_checkboxes = []
 
@@ -49,24 +49,24 @@ class PatientListWindow(QDialog):
         semptom_group.setLayout(semptom_form)
         layout.addWidget(semptom_group)
 
-        # 🔍 Filtrele butonu
+
         self.filter_button = QPushButton("🔍 Filtrele")
         self.filter_button.clicked.connect(self.hastalari_filtrele)
         layout.addWidget(self.filter_button)
 
-        # 📋 Seçili hasta detay butonu
+
         self.btn_detay = QPushButton("📋 Seçili Hastayı Görüntüle")
         self.btn_detay.clicked.connect(self.detay_goster)
         layout.addWidget(self.btn_detay)
 
-        # 📅 İlk kan şekeri ve belirti girişi
+
         self.btn_ilk_veri = QPushButton("📅 Kan Şekeri ve Belirti Gir")
         self.btn_ilk_veri.clicked.connect(self.ilk_veri_gir)
         layout.addWidget(self.btn_ilk_veri)
 
         self.setLayout(layout)
 
-        self.db = DBManager(password="Necmettin2004")
+        self.db = DBManager(password="Hekim11322..")
         self.hastalar = self.db.doktorun_hastalarini_getir(doktor_id)
 
         for h in self.hastalar:
@@ -89,7 +89,7 @@ class PatientListWindow(QDialog):
         max_seker = self.seker_max_input.text().strip()
         secilen_belirtiler = [cb.text() for cb in self.semptom_checkboxes if cb.isChecked()]
 
-        self.db = DBManager(password="Necmettin2004")
+        self.db = DBManager(password="Hekim11322..")
         self.hastalar = self.db.filtreli_hasta_getir(self.doktor_id, min_seker, max_seker, secilen_belirtiler)
         self.db.kapat()
 

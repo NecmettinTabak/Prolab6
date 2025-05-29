@@ -2,7 +2,7 @@ class PatientExercise:
     def __init__(self, hasta_id, egzersiz_id, tarih, yapildi_mi=False):
         self.hasta_id = hasta_id
         self.egzersiz_id = egzersiz_id
-        self.tarih = tarih  # "YYYY-MM-DD"
+        self.tarih = tarih
         self.yapildi_mi = yapildi_mi
 
     def __repr__(self):

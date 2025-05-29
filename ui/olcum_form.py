@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QDialog, QLabel, QLineEdit, QPushButton, QFormLayout, QMessageBox, QTimeEdit, QDateEdit
 from datetime import datetime
-from models.measurement import Measurement
+from models.olcum import Measurement
 from database.db_manager import DBManager
 
 def zaman_dilimini_bul(saat: int):
@@ -33,7 +33,7 @@ class MeasurementForm(QDialog):
         self.saat_input = QTimeEdit()
         self.saat_input.setTime(datetime.now().time())
 
-        self.zaman_label = QLabel("")  # boş başlat
+        self.zaman_label = QLabel("")
         self.btn_kaydet = QPushButton("💾 Kaydet")
         self.btn_kaydet.clicked.connect(self.veri_kaydet)
 
@@ -63,7 +63,7 @@ class MeasurementForm(QDialog):
             else:
                 self.zaman_label.setText("⏱️ Bu saat herhangi bir ölçüm diliminde değil")
 
-            db = DBManager(password="Necmettin2004")
+            db = DBManager(password="Hekim11322..")
 
             if zaman_dilimi and db.zaten_var_mi(self.hasta_id, tarih, zaman_dilimi):
                 QMessageBox.warning(self, "🛑 Ölçüm Tekrarı",

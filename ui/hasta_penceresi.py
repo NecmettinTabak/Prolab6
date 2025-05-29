@@ -1,12 +1,14 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QMessageBox, QFrame
 from PyQt5.QtGui import QPixmap, QFont, QPainter, QPainterPath
 from PyQt5.QtCore import Qt
-from ui.measurement_form import MeasurementForm
-from ui.daily_tracking_form import DailyTrackingForm
-from ui.patient_recommendation_window import PatientRecommendationWindow
-#from ui.graph_window import GraphWindow  # 📊 Yeni pencereyi dahil et
+from ui.olcum_form import MeasurementForm
+from ui.gunluk_izleme_formu import DailyTrackingForm
+from ui.hasta_oneri_penceresi import PatientRecommendationWindow
 from database.db_manager import DBManager
-from ui.GraphWindow import GraphWindow
+from ui.grafik_penceresi import GraphWindow
+from ui.hasta_duzen_takip_penceresi  import PatientAdherenceWindow
+
+
 
 class PatientWindow(QWidget):
     def __init__(self, hasta_adi, hasta_id):
@@ -48,23 +50,29 @@ class PatientWindow(QWidget):
 
         self.profil_label.setPixmap(rounded)
 
-        self.label = QLabel(f"🧍‍♂️ Hoş geldiniz, {hasta_adi}")
+        self.label = QLabel(f"Hoş geldiniz, {hasta_adi}")
         self.label.setFont(QFont("Arial", 16))
         self.label.setAlignment(Qt.AlignCenter)
 
         self.button_olcum = QPushButton("📅 Ölçüm Girişi")
         self.button_takip = QPushButton("🗒 Günlük Takip")
+        self.adherence_btn = QPushButton("📈 Uyum Yüzdem")
         self.button_oneriler = QPushButton("🧠 Önerilerim")
         self.button_goster = QPushButton("📊 Kan Şekeri Takibi")
         self.grafik_buton = QPushButton("📊 Günlük Kan Şekeri Grafiği")
         self.button_cikis = QPushButton("🚪 Çıkış Yap")
 
+
         self.button_olcum.clicked.connect(self.olcum_formu_ac)
         self.button_takip.clicked.connect(self.takip_formu_ac)
+        self.adherence_btn.clicked.connect(self.show_adherence_window)
         self.button_oneriler.clicked.connect(self.onerileri_goster)
         self.button_goster.clicked.connect(self.insulin_onerisi_goster)
         self.grafik_buton.clicked.connect(self.grafik_goster)
+
         self.button_cikis.clicked.connect(self.close)
+
+
 
         layout.addWidget(self.profil_frame)
         layout.addSpacing(10)
@@ -72,10 +80,12 @@ class PatientWindow(QWidget):
         layout.addSpacing(15)
         layout.addWidget(self.button_olcum)
         layout.addWidget(self.button_takip)
+        layout.addWidget(self.adherence_btn)
         layout.addWidget(self.button_oneriler)
         layout.addWidget(self.button_goster)
         layout.addWidget(self.grafik_buton)
         layout.addWidget(self.button_cikis)
+
 
         self.setLayout(layout)
 
@@ -108,7 +118,7 @@ class PatientWindow(QWidget):
 
     def insulin_onerisi_goster(self):
         try:
-            db = DBManager(password="Necmettin2004")
+            db = DBManager(password="Hekim11322..")
             sonuc = db.insulin_dozu_getir(self.hasta_id)
             db.kapat()
 
@@ -129,3 +139,7 @@ class PatientWindow(QWidget):
             pencere.exec_()
         except Exception as e:
             QMessageBox.critical(self, "Hata", f"Grafik penceresi açılamadı: {e}")
+
+    def show_adherence_window(self):
+        self.adherence_window = PatientAdherenceWindow(self.hasta_id)
+        self.adherence_window.exec_()

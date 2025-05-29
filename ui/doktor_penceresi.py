@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QFrame
 from PyQt5.QtGui import QPixmap, QFont, QPainter, QPainterPath
 from PyQt5.QtCore import Qt
-from ui.patient_register_window import PatientRegisterWindow
-from ui.patient_list_window import PatientListWindow
+from ui.hasta_kayit_formu import PatientRegisterWindow
+from ui.hasta_listeleme_ekrani import PatientListWindow
 
 class DoctorWindow(QWidget):
     def __init__(self, doctor_adi, doctor_id):
@@ -13,12 +13,12 @@ class DoctorWindow(QWidget):
         self.register_window = None
 
         self.setWindowTitle("Doktor Paneli")
-        self.showMaximized()  # 👈 Tam ekran başlat
+        self.showMaximized()
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
 
-        # 🖼️ Profil çerçevesi
+
         self.profil_frame = QFrame()
         self.profil_frame.setFixedSize(160, 160)
         self.profil_frame.setStyleSheet("""
@@ -48,12 +48,12 @@ class DoctorWindow(QWidget):
 
         self.profil_label.setPixmap(rounded)
 
-        # 👨‍⚕️ Hoş geldiniz mesajı
+
         self.label = QLabel(f"👨‍⚕️ Hoş geldiniz, Dr. {doctor_adi}")
         self.label.setFont(QFont("Arial", 16))
         self.label.setAlignment(Qt.AlignCenter)
 
-        # 🔘 Butonlar
+
         self.button_hasta_ekle = QPushButton("🆕 Yeni Hasta Ekle")
         self.button_hasta_ekle.clicked.connect(self.hasta_ekle)
 

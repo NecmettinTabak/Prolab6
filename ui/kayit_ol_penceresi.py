@@ -1,22 +1,23 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox, QGroupBox, QHBoxLayout
 from PyQt5.QtCore import Qt
 from database.db_manager import DBManager
-from ui.doctor_window import DoctorWindow
-from ui.patient_window import PatientWindow
-from logic.utils import hash_sifre
+from logic.sifreleme import hash_sifre
+from ui.doktor_penceresi import DoctorWindow
+from ui.hasta_penceresi import PatientWindow
+
 
 class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Diyabet Takip Sistemi - Giriş")
-        self.showMaximized()  # Tam ekran başlat
+        self.showMaximized()
 
-        # Ana başlık
+
         self.title_label = QLabel("🩺 Diyabet Takip Sistemi")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("font-size: 32px; font-weight: bold; color: #2c3e50;")
 
-        # Giriş kutusu (grup box)
+
         self.group_box = QGroupBox("Giriş Paneli")
         self.group_box.setStyleSheet("QGroupBox { font-size: 18px; padding: 20px; }")
 
@@ -52,7 +53,7 @@ class LoginWindow(QWidget):
         sifre = self.input_sifre.text()
         sifre = hash_sifre(sifre)
 
-        db = DBManager(password="Necmettin2004")
+        db = DBManager(password="Hekim11322..")
         user = db.kullanici_getir(tc_no, sifre)
         db.kapat()
 
